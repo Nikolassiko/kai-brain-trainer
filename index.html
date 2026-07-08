@@ -259,6 +259,26 @@
   .kbt-qrow-edit input, .kbt-qrow-edit select{width:100%;}
 
   .kbt-hint{font-size:11px;color:var(--muted);line-height:1.5;}
+  .kbt-chat-wrap{
+    flex:1;display:flex;flex-direction:column;width:100%;max-width:560px;margin:0 auto;
+    min-height:0;
+  }
+  .kbt-chat-log{flex:1;overflow-y:auto;padding:6px 2px;display:flex;flex-direction:column;gap:10px;}
+  .kbt-chat-bubble{max-width:85%;padding:10px 14px;border-radius:12px;font-size:14px;line-height:1.5;}
+  .kbt-chat-bubble.ai{align-self:flex-start;background:var(--panel2);border:1px solid var(--border);}
+  .kbt-chat-bubble.user{align-self:flex-end;background:rgba(79,179,217,0.15);border:1px solid rgba(79,179,217,0.35);}
+  .kbt-chat-inputrow{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+  .kbt-chat-inputrow input{flex:1;}
+  .kbt-chat-typing{align-self:flex-start;font-size:12px;color:var(--muted);font-family:var(--mono);}
+  .kbt-rem-row{
+    display:flex;align-items:center;gap:10px;padding:8px 10px;
+    border-bottom:1px solid var(--border);font-size:12.5px;
+  }
+  .kbt-rem-row .rtime{font-family:var(--mono);color:var(--cyan);white-space:nowrap;}
+  .kbt-rem-row .rlabel{flex:1;}
+  .kbt-rem-row .rtoggle, .kbt-rem-row .rdel{cursor:pointer;font-size:14px;color:var(--muted);}
+  .kbt-rem-row .rtoggle.on{color:var(--green);}
+  .kbt-rem-row .rdel:hover{color:var(--red);}
   .kbt-standalone-banner{
     background:rgba(240,168,53,0.08);border:1px solid rgba(240,168,53,0.35);
     border-radius:8px;padding:10px 14px;font-size:12px;color:var(--text);
@@ -320,9 +340,24 @@
   </div>
 
   <div class="kbt-body" id="kbtBody">
-    <div id="standaloneBanner"></div>
     <div class="kbt-section-label">// REŽIMY</div>
     <div class="kbt-grid" id="modeGrid"></div>
+
+    <div class="kbt-section-label">// PRIPOMIENKY</div>
+    <div class="kbt-panel" style="margin-bottom:22px;">
+      <div class="kbt-row" style="margin-top:0;">
+        <button class="kbt-btn" id="notifPermBtn">🔔 Povoliť upozornenia</button>
+        <button class="kbt-btn ghost" id="testSoundBtn">🔊 Test zvuku</button>
+        <span class="kbt-hint" id="notifStatus" style="flex:1;"></span>
+      </div>
+      <div class="kbt-row">
+        <input class="kbt-input" id="remTime" type="time" value="12:00">
+        <input class="kbt-input" id="remLabel" placeholder="Popis (napr. Recall pred obedom)" style="flex:1;min-width:180px;">
+        <button class="kbt-btn" id="addRemBtn">+ Pridať pripomienku</button>
+      </div>
+      <div id="remList" style="margin-top:8px;"></div>
+      <div class="kbt-hint">Funguje len kým je appka otvorená na pozadí (v prehliadači/nainštalovaná). Ak appku úplne vypneš, pripomienka nepríde.</div>
+    </div>
 
     <div class="kbt-section-label">// DENNÍK → OTÁZKY</div>
     <div class="kbt-panel kbt-diary">
@@ -333,13 +368,9 @@
           <option value="Poobede (12-15:30)">Poobede (cca 12:00 – 15:30)</option>
           <option value="Večer (zhrnutie dňa)">Večer (zhrnutie celého dňa)</option>
         </select>
-        <span class="kbt-hint" style="flex:1;">Zapisuj priebežne — 3× denne stačí, nemusíš čakať na večer. Menej sa to zamotá.</span>
+        <span class="kbt-hint" style="flex:1;">Appka sa ťa bude pýtať priebežne, kým píšeš — nie až po skončení.</span>
       </div>
-      <textarea id="diaryInput" placeholder="Napíš pár viet o tomto úseku dňa (čo si robil, s kým si hovoril, čo sa stalo)... Claude z toho vygeneruje otázky."></textarea>
-      <div class="kbt-row">
-        <button class="kbt-btn primary" id="generateBtn">Vygenerovať otázky</button>
-        <span id="genStatus" style="font-size:12px;color:var(--muted);"></span>
-      </div>
+      <button class="kbt-btn primary" id="startDiaryBtn" style="width:100%;margin-top:10px;">💬 Začať interaktívny zápis</button>
     </div>
 
     <div class="kbt-manage">
@@ -497,11 +528,11 @@
     mkQ('Vizualizácia','Rutina','Ako som sa pri tom cítil?'),
   ]);
 
-  function mkQ(sekcia, typ, otazka, odpoved){
+  function mkQ(sekcia, typ, otazka, odpoved, initialNextDate){
     return {
       id: 'q_'+Math.random().toString(36).slice(2,10),
       sekcia, typ, otazka, odpoved: odpoved||'',
-      lastReview:null, result:null, nextDate:null, created:todayStr()
+      lastReview:null, result:null, nextDate: initialNextDate || null, created:todayStr()
     };
   }
   function todayStr(){
@@ -1124,86 +1155,268 @@
     toast('Otázka pridaná.');
   });
 
-  // ---------------- Diary -> AI generated questions ----------------
-  document.getElementById('generateBtn').addEventListener('click', async ()=>{
-    const diary = document.getElementById('diaryInput').value.trim();
-    const block = document.getElementById('diaryBlock').value;
-    const statusEl = document.getElementById('genStatus');
-    if(!diary){ toast('Napíš najprv pár viet o tomto úseku dňa.'); return; }
+  // ---------------- Interaktívny denník (chat) ----------------
+  async function callClaude(messages, systemPrompt, maxTokens){
     const ownKey = getLocalApiKey();
     if(!HAS_CLAUDE_STORAGE && !ownKey){
-      statusEl.textContent = '⚠ Chýba API kľúč — klikni na ⚙ hore vpravo a vlož vlastný Anthropic API kľúč, alebo pridaj otázky ručne nižšie.';
-      return;
+      throw new Error('CHÝBA_KĽÚČ');
     }
-    statusEl.textContent = 'Generujem otázky...';
+    const fetchHeaders = HAS_CLAUDE_STORAGE
+      ? { "Content-Type": "application/json" }
+      : { "Content-Type": "application/json", "x-api-key": ownKey, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" };
+    const body = { model: "claude-sonnet-4-6", max_tokens: maxTokens || 400, messages };
+    if(systemPrompt) body.system = systemPrompt;
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST", headers: fetchHeaders, body: JSON.stringify(body)
+    });
+    if(!response.ok){
+      const errBody = await response.text();
+      throw new Error(`API ${response.status}: ${errBody.slice(0,200)}`);
+    }
+    const data = await response.json();
+    const textBlock = (data.content||[]).find(b=>b.type==='text');
+    if(!textBlock) throw new Error('Odpoveď neobsahovala text.');
+    return textBlock.text;
+  }
+
+  let diaryConvo = [];
+  let diaryBlockLabel = '';
+
+  function diarySystemPrompt(){
+    const weak = weakestCategories();
+    const weakNote = weak.length ? ` Používateľove momentálne najslabšie kategórie sú: ${weak.map(w=>`${w.typ} (${w.acc}%)`).join(', ')} — ak sa naskytne prirodzená príležitosť, sem-tam sa doopýtaj smerom k týmto kategóriám, ale nikdy to neforsíruj.` : '';
+    return `Vedieš krátky, prirodzený rozhovor s používateľom (ADHD), ktorý si zapisuje denník za úsek dňa "${diaryBlockLabel}". Tvojou úlohou NIE JE zbierať súvislý text, ale klásť VŽDY presne JEDNU krátku, konkrétnu doplňujúcu otázku na to, čo používateľ práve napísal — pýtaj sa na konkrétne detaily: mená, čísla, pocity, príčiny, poradie udalostí, obsah rozhovorov, rozhodnutia.
+
+Pravidlá:
+- Jedna otázka naraz, max 1 veta, žiadne dlhé úvody ani zhrnutia.
+- Max 2 doplňujúce otázky k jednej téme, potom prirodzene vyzvi používateľa na ďalšiu vec ("Čo bolo ďalej?" / "Čo ešte?").
+- Nikdy si nič nedomýšľaj ani nehodnoť — len sa pýtaj.
+- Píš po slovensky, neformálne, stručne.${weakNote}`;
+  }
+
+  function renderDiaryChat(){
+    const overlay = document.getElementById('quizOverlay');
+    overlay.innerHTML = `
+      <div class="kbt-quiz">
+        <div class="kbt-quiz-top">
+          <span class="kbt-quiz-progress">Interaktívny zápis · ${escapeHtml(diaryBlockLabel)}</span>
+          <button class="kbt-btn ghost" id="diaryCloseBtn">Zavrieť bez uloženia</button>
+        </div>
+        <div class="kbt-chat-wrap">
+          <div class="kbt-chat-log" id="chatLog"></div>
+          <div class="kbt-chat-inputrow">
+            <input class="kbt-input" id="chatInput" placeholder="Napíš odpoveď / ďalšiu vec...">
+            <button class="kbt-btn primary" id="chatSendBtn">Odoslať</button>
+          </div>
+          <div class="kbt-row" style="justify-content:center;margin-top:10px;">
+            <button class="kbt-btn" id="diaryFinishBtn">✅ Ukončiť a uložiť ako otázky</button>
+          </div>
+        </div>
+      </div>`;
+    document.getElementById('diaryCloseBtn').addEventListener('click', ()=>{ overlay.innerHTML=''; diaryConvo=[]; });
+    document.getElementById('chatSendBtn').addEventListener('click', sendDiaryMessage);
+    document.getElementById('chatInput').addEventListener('keydown', (e)=>{ if(e.key==='Enter') sendDiaryMessage(); });
+    document.getElementById('diaryFinishBtn').addEventListener('click', finishDiaryChat);
+    renderChatLog();
+  }
+
+  function renderChatLog(){
+    const log = document.getElementById('chatLog');
+    if(!log) return;
+    const intro = `<div class="kbt-chat-bubble ai">Poď na to — čo sa dialo (${escapeHtml(diaryBlockLabel)})? Stačí aj jedna veta, doptám sa na detaily.</div>`;
+    log.innerHTML = intro + diaryConvo.map(m=>`<div class="kbt-chat-bubble ${m.role==='user'?'user':'ai'}">${escapeHtml(m.content)}</div>`).join('');
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function addTyping(){
+    const log = document.getElementById('chatLog');
+    if(!log) return;
+    const t = document.createElement('div');
+    t.className = 'kbt-chat-typing'; t.id = 'chatTyping'; t.textContent = '...píše sa odpoveď...';
+    log.appendChild(t); log.scrollTop = log.scrollHeight;
+  }
+  function removeTyping(){ const t = document.getElementById('chatTyping'); if(t) t.remove(); }
+
+  async function sendDiaryMessage(){
+    const input = document.getElementById('chatInput');
+    const text = input.value.trim();
+    if(!text) return;
+    diaryConvo.push({ role:'user', content:text });
+    input.value = '';
+    renderChatLog();
+    addTyping();
     try{
-      const weak = weakestCategories();
-      const weakNote = weak.length
-        ? `Tvoje momentálne najslabšie kategórie sú: ${weak.map(w=>`${w.typ} (${w.acc}%)`).join(', ')}. Ak text denníka obsahuje materiál na tieto kategórie, uprednostni z neho vygenerovanie väčšieho podielu otázok práve tohto typu — ale STÁLE len z toho, čo je reálne v texte, nič nevymýšľaj naviac.`
-        : '';
+      const reply = await callClaude(diaryConvo, diarySystemPrompt(), 200);
+      removeTyping();
+      diaryConvo.push({ role:'assistant', content:reply });
+      renderChatLog();
+    }catch(e){
+      removeTyping();
+      if(e.message === 'CHÝBA_KĽÚČ'){
+        diaryConvo.push({ role:'assistant', content:'⚠ Chýba API kľúč — klikni na ⚙ hore vpravo a vlož vlastný Anthropic API kľúč.' });
+      } else {
+        diaryConvo.push({ role:'assistant', content:`⚠ Chyba: ${e.message}` });
+      }
+      renderChatLog();
+    }
+  }
 
-      const prompt = `Toto je útržok osobného denníka používateľa (časový úsek dňa: "${block}"). Používateľ má ADHD a trénuje si epizodickú pamäť (spomienky na vlastný deň), NIE všeobecné fakty ani vedomosti.
+  async function finishDiaryChat(){
+    const overlay = document.getElementById('quizOverlay');
+    if(diaryConvo.length < 2){ toast('Napíš aspoň niečo predtým, než ukončíš.'); return; }
+    const finishBtn = document.getElementById('diaryFinishBtn');
+    finishBtn.disabled = true; finishBtn.textContent = 'Ukladám...';
+    try{
+      const transcript = diaryConvo.map(m=> (m.role==='user'?'Používateľ: ':'Otázka appky: ')+m.content).join('\n');
+      const extractPrompt = `Toto je prepis rozhovoru medzi appkou a používateľom (ADHD) o úseku dňa "${diaryBlockLabel}". Appka sa pýtala, používateľ odpovedal vlastnými slovami.
 
-Rozdeľ obsah podľa sekcií — použi IBA tie zo zoznamu nižšie, ktoré sa v texte reálne spomínajú (nevymýšľaj sekcie, ktoré tam nie sú):
-${sections.filter(s=>s!=='Vlastná').join(', ')}
+Z tohto rozhovoru vytiahni flashcards na precvičenie epizodickej pamäte — VÝHRADNE z toho, čo používateľ SÁM napísal (jeho vlastné odpovede sú zdroj pravdy, nič nedomýšľaj).
 
-Vygeneruj 8 až 16 otázok (menej, ak text nie je bohatý na obsah — nikdy si nevymýšľaj obsah, ktorý v texte nie je). Každá otázka musí byť konkrétna, viazaná na TENTO text, nie všeobecná.
+Pre každú kartu:
+- "otazka" = prirodzene sformulovaná otázka na fakt, ktorý používateľ spomenul (môže byť aj presne tá, čo appka položila)
+- "odpoved" = presná odpoveď odvodená z toho, čo používateľ napísal
+- "sekcia" = jedna z: ${sections.filter(s=>s!=='Vlastná').join(', ')}
+- "typ" = jeden z: Ľudia, Miesta, Poradie, Rozhovory, Čísla, Detaily, Rozhodnutie
 
-Každú otázku priraď k JEDNÉMU z týchto typov spomienky (drž sa presne tejto taxonómie):
-- Ľudia — mená, kto čo povedal/urobil ("Ako sa volal nový kolega?")
-- Miesta — kde sa čo odohralo ("Kde bol problém s paletami?")
-- Poradie — čo bolo pred/po niečom ("Čo sa stalo predtým, než prišiel kamión?")
-- Rozhovory — obsah konkrétneho rozhovoru ("Čo povedal vedúci o zmene?")
-- Čísla — konkrétne čísla, objednávky, sumy, počty ("Aké číslo mala objednávka?")
-- Detaily — vizuálne/zmyslové detaily situácie ("Akú farbu mal ten kamión?")
-- Rozhodnutie — prečo padlo konkrétne rozhodnutie (najmä pri tradingu: "Prečo si otvoril tento obchod?")
+Vytvor kartu za KAŽDÝ konkrétny fakt, ktorý používateľ spomenul (mená, čísla, pocity, príčiny, rozhodnutia, poradie). Ak používateľ napísal len všeobecnú vec bez detailu, kartu pre ňu nevytváraj.
 
-${weakNote}
-
-Vráť IBA JSON pole (žiadny iný text, žiadne markdown bločky), formát:
+Vráť IBA JSON pole, žiadny iný text, žiadne markdown bločky:
 [{"sekcia":"...", "typ":"...", "otazka":"...", "odpoved":"..."}]
 
-Text denníka:
-"""${diary}"""`;
+Prepis rozhovoru:
+"""${transcript}"""`;
 
-      const fetchHeaders = HAS_CLAUDE_STORAGE
-        ? { "Content-Type": "application/json" }
-        : { "Content-Type": "application/json", "x-api-key": ownKey, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" };
-
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: fetchHeaders,
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 2000,
-          messages: [{ role: "user", content: prompt }]
-        })
-      });
-      if(!response.ok){
-        const errBody = await response.text();
-        throw new Error(`API ${response.status}: ${errBody.slice(0,200)}`);
-      }
-      const data = await response.json();
-      const textBlock = (data.content||[]).find(b=>b.type==='text');
-      if(!textBlock) throw new Error('Odpoveď neobsahovala text.');
-      const cleaned = textBlock.text.replace(/```json|```/g,'').trim();
+      const raw = await callClaude([{role:'user', content:extractPrompt}], null, 2000);
+      const cleaned = raw.replace(/```json|```/g,'').trim();
       const items = JSON.parse(cleaned);
       let added = 0;
       items.forEach(it=>{
-        if(it.otazka){
-          questions.push(mkQ(sections.includes(it.sekcia)?it.sekcia:'Vlastná', TYPY.includes(it.typ)?it.typ:'Detaily', it.otazka, it.odpoved||''));
+        if(it.otazka && it.odpoved){
+          questions.push(mkQ(sections.includes(it.sekcia)?it.sekcia:'Vlastná', TYPY.includes(it.typ)?it.typ:'Detaily', it.otazka, it.odpoved));
           added++;
         }
       });
       await saveQuestions();
       renderAll();
-      statusEl.textContent = `Pridaných ${added} otázok.`;
-      document.getElementById('diaryInput').value = '';
-      toast(`Vygenerovaných ${added} otázok z denníka.`);
+      overlay.innerHTML = '';
+      diaryConvo = [];
+      toast(`Uložených ${added} otázok s odpoveďami — vyskúšaj si ich pred ďalším zápisom, nie hneď teraz.`);
     }catch(e){
-      statusEl.textContent = `⚠ Nepodarilo sa vygenerovať otázky: ${e.message}`;
+      finishBtn.disabled = false; finishBtn.textContent = '✅ Ukončiť a uložiť ako otázky';
+      toast(`⚠ Nepodarilo sa uložiť: ${e.message}`);
     }
+  }
+
+  document.getElementById('startDiaryBtn').addEventListener('click', async ()=>{
+    diaryBlockLabel = document.getElementById('diaryBlock').value;
+    diaryConvo = [];
+    renderDiaryChat();
   });
+
+  // ---------------- Pripomienky (in-app, user-configurable) ----------------
+  const REMINDERS_KEY = 'kbt_reminders_v1';
+  let reminders = [];
+  const firedToday = {};
+
+  function defaultReminders(){
+    return [
+      { id:'r1', time:'12:00', label:'Recall ráno → zapíš Doobeda', enabled:true },
+      { id:'r2', time:'20:00', label:'Recall poobede → zapíš Večer', enabled:true }
+    ];
+  }
+
+  async function loadReminders(){
+    try{
+      const r = await storage.get(REMINDERS_KEY);
+      reminders = r ? JSON.parse(r.value) : defaultReminders();
+    }catch(e){ reminders = defaultReminders(); }
+    renderReminders();
+  }
+  async function saveReminders(){
+    try{ await storage.set(REMINDERS_KEY, JSON.stringify(reminders)); }
+    catch(e){ toast('⚠ Uloženie pripomienok zlyhalo.'); }
+  }
+
+  function renderReminders(){
+    const list = document.getElementById('remList');
+    if(!list) return;
+    list.innerHTML = '';
+    if(!reminders.length){ list.innerHTML = '<div class="kbt-empty">Zatiaľ žiadne pripomienky.</div>'; return; }
+    reminders.slice().sort((a,b)=>a.time.localeCompare(b.time)).forEach(r=>{
+      const row = document.createElement('div');
+      row.className = 'kbt-rem-row';
+      row.innerHTML = `<span class="rtime">${r.time}</span><span class="rlabel">${escapeHtml(r.label)}</span><span class="rtoggle ${r.enabled?'on':''}" title="Zapnúť/vypnúť">${r.enabled?'🔔':'🔕'}</span><span class="rdel" title="Vymazať">✕</span>`;
+      row.querySelector('.rtoggle').addEventListener('click', async ()=>{
+        r.enabled = !r.enabled;
+        await saveReminders();
+        renderReminders();
+      });
+      row.querySelector('.rdel').addEventListener('click', async ()=>{
+        reminders = reminders.filter(x=>x.id!==r.id);
+        await saveReminders();
+        renderReminders();
+      });
+      list.appendChild(row);
+    });
+  }
+
+  document.getElementById('addRemBtn').addEventListener('click', async ()=>{
+    const time = document.getElementById('remTime').value;
+    const label = document.getElementById('remLabel').value.trim() || 'Pripomienka';
+    if(!time){ toast('Zvoľ čas.'); return; }
+    reminders.push({ id:'r_'+Math.random().toString(36).slice(2,8), time, label, enabled:true });
+    document.getElementById('remLabel').value = '';
+    await saveReminders();
+    renderReminders();
+    toast('Pripomienka pridaná.');
+  });
+
+  document.getElementById('notifPermBtn').addEventListener('click', async ()=>{
+    const statusEl = document.getElementById('notifStatus');
+    if(!('Notification' in window)){ statusEl.textContent = 'Notifikácie nie sú v tomto prehliadači podporované.'; return; }
+    const perm = await Notification.requestPermission();
+    statusEl.textContent = perm === 'granted' ? '✅ Upozornenia povolené.' : '⚠ Upozornenia zamietnuté — appka bude aspoň prehrávať zvuk pri otvorenej appke.';
+  });
+
+  function playChime(){
+    try{
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      [0, 0.15, 0.3].forEach((delay, i)=>{
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = [880, 1108, 1318][i];
+        gain.gain.setValueAtTime(0.15, ctx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.3);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + delay);
+        osc.stop(ctx.currentTime + delay + 0.3);
+      });
+    }catch(e){}
+  }
+  document.getElementById('testSoundBtn').addEventListener('click', playChime);
+
+  function checkReminders(){
+    const now = new Date();
+    const hhmm = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+    const dayKey = todayStr();
+    reminders.forEach(r=>{
+      if(!r.enabled) return;
+      if(r.time !== hhmm) return;
+      const fireKey = r.id+'_'+dayKey;
+      if(firedToday[fireKey]) return;
+      firedToday[fireKey] = true;
+      playChime();
+      if('Notification' in window && Notification.permission === 'granted'){
+        new Notification('KAI Brain Trainer', { body: r.label, tag: fireKey });
+      } else {
+        toast(`🔔 ${r.label}`);
+      }
+    });
+  }
+  setInterval(checkReminders, 20000);
+
+  loadReminders();
 
   loadAll();
 })();
