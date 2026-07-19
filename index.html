@@ -343,22 +343,6 @@
     <div class="kbt-section-label">// REŽIMY</div>
     <div class="kbt-grid" id="modeGrid"></div>
 
-    <div class="kbt-section-label">// PRIPOMIENKY</div>
-    <div class="kbt-panel" style="margin-bottom:22px;">
-      <div class="kbt-row" style="margin-top:0;">
-        <button class="kbt-btn" id="notifPermBtn">🔔 Povoliť upozornenia</button>
-        <button class="kbt-btn ghost" id="testSoundBtn">🔊 Test zvuku</button>
-        <span class="kbt-hint" id="notifStatus" style="flex:1;"></span>
-      </div>
-      <div class="kbt-row">
-        <input class="kbt-input" id="remTime" type="time" value="12:00">
-        <input class="kbt-input" id="remLabel" placeholder="Popis (napr. Recall pred obedom)" style="flex:1;min-width:180px;">
-        <button class="kbt-btn" id="addRemBtn">+ Pridať pripomienku</button>
-      </div>
-      <div id="remList" style="margin-top:8px;"></div>
-      <div class="kbt-hint">Funguje len kým je appka otvorená na pozadí (v prehliadači/nainštalovaná). Ak appku úplne vypneš, pripomienka nepríde.</div>
-    </div>
-
     <div class="kbt-section-label">// DENNÍK → OTÁZKY</div>
     <div class="kbt-panel kbt-diary">
       <div class="kbt-row" style="margin-top:0;">
@@ -373,37 +357,60 @@
       <button class="kbt-btn primary" id="startDiaryBtn" style="width:100%;margin-top:10px;">💬 Začať interaktívny zápis</button>
     </div>
 
-    <div class="kbt-manage">
-      <div class="kbt-section-label">// SEKCIE</div>
-      <div class="kbt-panel">
-        <div class="kbt-row" id="sectionChips"></div>
-        <div class="kbt-row">
-          <input class="kbt-input" id="newSectionInput" placeholder="Nová sekcia..." style="flex:1;min-width:160px;">
-          <button class="kbt-btn" id="addSectionBtn">+ Pridať sekciu</button>
-        </div>
-      </div>
+    <div style="text-align:center;margin:18px 0 6px;">
+      <button class="kbt-btn ghost" id="toggleAdvancedManageBtn" style="font-size:11px;">▼ Nastavenia, sekcie a pripomienky</button>
     </div>
+    <div id="advancedManage" style="display:none;">
 
-    <div class="kbt-manage">
-      <div class="kbt-section-label">// SPRÁVA OTÁZOK (súhrn podľa sekcií)</div>
-      <div class="kbt-panel">
-        <div class="kbt-row">
-          <select class="kbt-select" id="newSekcia"></select>
-          <select class="kbt-select" id="newTyp"></select>
-          <input class="kbt-input" id="newOtazka" placeholder="Nová otázka..." style="flex:1;min-width:200px;">
-          <input class="kbt-input" id="newOdpoved" placeholder="Odpoveď (voliteľné)" style="flex:1;min-width:160px;">
-          <button class="kbt-btn" id="addQBtn">Pridať</button>
+      <div class="kbt-section-label">// PRIPOMIENKY</div>
+      <div class="kbt-panel" style="margin-bottom:22px;">
+        <div class="kbt-row" style="margin-top:0;">
+          <button class="kbt-btn" id="notifPermBtn">🔔 Povoliť upozornenia</button>
+          <button class="kbt-btn ghost" id="testSoundBtn">🔊 Test zvuku</button>
+          <span class="kbt-hint" id="notifStatus" style="flex:1;"></span>
         </div>
         <div class="kbt-row">
-          <span class="kbt-hint">💡 Odpoveď je nepovinná. Ulož si ju vtedy, keď chceš mať pri tréningu s čím sa porovnať (typicky pri otázkach z denníka, ktoré má odpoveď hneď priloženú). Pri rutinných otázkach ju často necháš prázdnu — cieľom je spomenúť si z hlavy, nie odpísať uloženú vetu.</span>
+          <input class="kbt-input" id="remTime" type="time" value="12:00" autocomplete="off">
+          <input class="kbt-input" id="remLabel" placeholder="Popis (napr. Recall pred obedom)" style="flex:1;min-width:180px;" autocomplete="off">
+          <button class="kbt-btn" id="addRemBtn">+ Pridať pripomienku</button>
         </div>
-        <div class="kbt-row">
-          <button class="kbt-btn ghost" id="exportBtn">⬇ Export zálohy (JSON)</button>
-          <button class="kbt-btn ghost" id="importBtn">⬆ Importovať zálohu</button>
-          <input type="file" id="importFile" accept="application/json" style="display:none;">
-        </div>
-        <div id="qgroups" style="margin-top:10px;"></div>
+        <div id="remList" style="margin-top:8px;"></div>
+        <div class="kbt-hint">Funguje len kým je appka otvorená na pozadí (v prehliadači/nainštalovaná). Ak appku úplne vypneš, pripomienka nepríde.</div>
       </div>
+
+      <div class="kbt-manage">
+        <div class="kbt-section-label">// SEKCIE</div>
+        <div class="kbt-panel">
+          <div class="kbt-row" id="sectionChips"></div>
+          <div class="kbt-row">
+            <input class="kbt-input" id="newSectionInput" placeholder="Nová sekcia..." style="flex:1;min-width:160px;" autocomplete="off">
+            <button class="kbt-btn" id="addSectionBtn">+ Pridať sekciu</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="kbt-manage">
+        <div class="kbt-section-label">// SPRÁVA OTÁZOK (súhrn podľa sekcií)</div>
+        <div class="kbt-panel">
+          <div class="kbt-row">
+            <select class="kbt-select" id="newSekcia"></select>
+            <select class="kbt-select" id="newTyp"></select>
+            <input class="kbt-input" id="newOtazka" placeholder="Nová otázka..." style="flex:1;min-width:200px;" autocomplete="off">
+            <input class="kbt-input" id="newOdpoved" placeholder="Odpoveď (voliteľné)" style="flex:1;min-width:160px;" autocomplete="off">
+            <button class="kbt-btn" id="addQBtn">Pridať</button>
+          </div>
+          <div class="kbt-row">
+            <span class="kbt-hint">💡 Odpoveď je nepovinná. Ulož si ju vtedy, keď chceš mať pri tréningu s čím sa porovnať (typicky pri otázkach z denníka, ktoré má odpoveď hneď priloženú). Pri rutinných otázkach ju často necháš prázdnu — cieľom je spomenúť si z hlavy, nie odpísať uloženú vetu.</span>
+          </div>
+          <div class="kbt-row">
+            <button class="kbt-btn ghost" id="exportBtn">⬇ Export zálohy (JSON)</button>
+            <button class="kbt-btn ghost" id="importBtn">⬆ Importovať zálohu</button>
+            <input type="file" id="importFile" accept="application/json" style="display:none;">
+          </div>
+          <div id="qgroups" style="margin-top:10px;"></div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -468,7 +475,7 @@
           <div style="width:100%;text-align:left;">
             <div class="kbt-section-label">// ANTHROPIC API KĽÚČ</div>
             <p class="kbt-hint">Appka beží mimo Claude, takže generovanie otázok z denníka potrebuje tvoj vlastný API kľúč (z <span style="color:var(--cyan);">console.anthropic.com</span>). Kľúč sa uloží len lokálne v tomto prehliadači, nikam sa neposiela okrem priamo na Anthropic API.</p>
-            <input class="kbt-input" id="apiKeyInput" type="password" placeholder="sk-ant-..." style="width:100%;margin:10px 0;" value="${escapeAttr(current)}">
+            <input class="kbt-input" id="apiKeyInput" type="password" autocomplete="off" placeholder="sk-ant-..." style="width:100%;margin:10px 0;" value="${escapeAttr(current)}">
             <div class="kbt-row">
               <button class="kbt-btn primary" id="apiKeySave">Uložiť kľúč</button>
               ${current ? '<button class="kbt-btn ghost" id="apiKeyClear">Odstrániť kľúč</button>' : ''}
@@ -498,14 +505,16 @@
   const STATS_KEY = 'kbt_stats_v1';
   const LOG_KEY = 'kbt_log_v1';
   const SECTIONS_KEY = 'kbt_sections_v1';
+  const CONCEPTS_KEY = 'kbt_concepts_v1';
 
   const DEFAULT_SECTIONS = ['Ráno','Práca','Trading','Priateľka / ľudia','Nemčina','Večer','Vizualizácia','Vlastná'];
-  const TYPY = ['Rutina','Ľudia','Miesta','Poradie','Rozhovory','Čísla','Detaily','Rozhodnutie','Vlastná'];
+  const TYPY = ['Rutina','Ľudia','Miesta','Poradie','Rozhovory','Čísla','Detaily','Rozhodnutie','Koncept','Vlastná'];
   const INTERVALS = {0:1,1:2,2:5,3:10};
 
   let sections = DEFAULT_SECTIONS.slice();
 
   let questions = [];
+  let concepts = [];
   let stats = { xp:0, streakDays:0, lastActiveDay:null, totalAnswered:0, totalCorrect:0, typStats:{}, schulteBest:null };
   let log = [];
 
@@ -568,10 +577,18 @@
       const l = await storage.get(LOG_KEY);
       log = l ? JSON.parse(l.value) : [];
     }catch(e){ log = []; }
+    try{
+      const c = await storage.get(CONCEPTS_KEY);
+      concepts = c ? JSON.parse(c.value) : [];
+    }catch(e){ concepts = []; }
     if(!questions.length) questions = seedQuestions();
     await saveQuestions();
     await saveSections();
     renderAll();
+  }
+  async function saveConcepts(){
+    try{ await storage.set(CONCEPTS_KEY, JSON.stringify(concepts)); }
+    catch(e){ toast('⚠ Uloženie konceptov zlyhalo.'); }
   }
   async function saveSections(){
     try{ await storage.set(SECTIONS_KEY, JSON.stringify(sections)); }
@@ -635,28 +652,49 @@
     return questions.filter(q => !q.nextDate || q.nextDate <= t);
   }
 
+  let showAdvancedModes = false;
+
   function renderModes(){
     const dq = dueQuestions();
-    const modes = [
+    const coreModes = [
       {id:'daily', icon:'🟢', name:'Daily Recall', desc:'Otázky na dnes, vlastným tempom.', count:dq.length},
+      {id:'stats', icon:'📈', name:'Štatistiky', desc:'Slabé miesta podľa typu spomienky.', count:null},
+    ];
+    const advancedModes = [
       {id:'lightning', icon:'⚡', name:'Lightning', desc:'8 sekúnd na otázku, rýchly reveal.', count:questions.length},
       {id:'random', icon:'🎲', name:'Random Challenge', desc:'Naprieč sekciami, náhodné poradie.', count:questions.length},
       {id:'stress', icon:'🔥', name:'Stress Mode', desc:'Odpočítavanie pred odhalením odpovede.', count:questions.length},
       {id:'boss', icon:'🎯', name:'Boss Fight', desc:'25 otázok, presnosť a čas na konci.', count:Math.min(25,questions.length)},
       {id:'schulte', icon:'🔢', name:'Schulte tabuľka', desc:'Periférne videnie, nová mriežka denne.', count:null},
-      {id:'stats', icon:'📈', name:'Štatistiky', desc:'Slabé miesta podľa typu spomienky.', count:null},
+      {id:'concept', icon:'🧩', name:'Koncept / Pravidlo', desc:'AMM: atóm → sémantika → obraz → sieť → BAM.', count:concepts.length},
+      {id:'reading', icon:'📖', name:'Čítanie (PQRST)', desc:'Spracovanie knihy/článku po fázach.', count:null},
     ];
     const grid = document.getElementById('modeGrid');
     grid.innerHTML = '';
-    const NO_QUESTIONS_NEEDED = ['stats','schulte'];
-    modes.forEach(m=>{
+    const NO_QUESTIONS_NEEDED = ['stats','schulte','concept','reading'];
+    function makeTile(m){
       const disabled = (!NO_QUESTIONS_NEEDED.includes(m.id) && questions.length===0);
       const div = document.createElement('div');
       div.className = 'kbt-tile'+(disabled?' disabled':'');
       div.innerHTML = `<span class="icon">${m.icon}</span><div class="name">${m.name}</div><div class="desc">${m.desc}</div>${m.count!==null?`<div class="count">${m.count}</div>`:''}`;
       if(!disabled) div.addEventListener('click', ()=> startMode(m.id));
-      grid.appendChild(div);
-    });
+      return div;
+    }
+    coreModes.forEach(m=> grid.appendChild(makeTile(m)));
+    if(showAdvancedModes){
+      advancedModes.forEach(m=> grid.appendChild(makeTile(m)));
+    }
+    const toggleWrap = document.createElement('div');
+    toggleWrap.style.gridColumn = '1 / -1';
+    toggleWrap.style.textAlign = 'center';
+    toggleWrap.style.marginTop = '4px';
+    const toggleBtn = document.createElement('button');
+    toggleBtn.className = 'kbt-btn ghost';
+    toggleBtn.style.fontSize = '11px';
+    toggleBtn.textContent = showAdvancedModes ? '▲ Skryť ďalšie režimy' : '▼ Zobraziť ďalšie režimy (Lightning, Schulte, Koncept...)';
+    toggleBtn.addEventListener('click', ()=>{ showAdvancedModes = !showAdvancedModes; renderModes(); });
+    toggleWrap.appendChild(toggleBtn);
+    grid.appendChild(toggleWrap);
   }
 
   function populateSectionSelect(){
@@ -860,6 +898,8 @@
   function startMode(modeId){
     if(modeId==='stats'){ renderStatsPanel(); return; }
     if(modeId==='schulte'){ renderSchulte(); return; }
+    if(modeId==='concept'){ renderConceptWizard(); return; }
+    if(modeId==='reading'){ renderReadingWizard(); return; }
     const pool = pickPool(modeId);
     if(!pool.length){ toast('Žiadne otázky pre tento režim.'); return; }
     session = {
@@ -1140,6 +1180,146 @@
     draw();
   }
 
+  // ---------------- Koncept / Pravidlo (AMM Fáza 2) ----------------
+  function renderConceptWizard(prefillText){
+    const overlay = document.getElementById('quizOverlay');
+    overlay.innerHTML = `
+      <div class="kbt-quiz">
+        <div class="kbt-quiz-top">
+          <span class="kbt-quiz-progress">🧩 Koncept / Pravidlo</span>
+          <button class="kbt-btn ghost" id="conceptCloseBtn">Zavrieť</button>
+        </div>
+        <div class="kbt-chat-wrap" style="overflow-y:auto;">
+          <div class="kbt-hint" style="margin-bottom:10px;">Toto je na vzťahy/pravidlá (je tam "lebo"), nie na holé fakty (mená, čísla) — tie idú cez Denníkový chat.</div>
+          <div style="text-align:left;display:flex;flex-direction:column;gap:10px;">
+            <div>
+              <label class="kbt-hint">Atóm (názov pojmu)</label>
+              <input class="kbt-input" id="cAtom" style="width:100%;" placeholder="napr. Fair value gap">
+            </div>
+            <div>
+              <label class="kbt-hint">Sekcia</label>
+              <select class="kbt-select" id="cSekcia" style="width:100%;"></select>
+            </div>
+            <div>
+              <label class="kbt-hint">Čo to je?</label>
+              <textarea class="kbt-input" id="cCoToJe" style="width:100%;min-height:50px;"></textarea>
+            </div>
+            <div>
+              <label class="kbt-hint">Načo to je? (lebo...)</label>
+              <textarea class="kbt-input" id="cNaco" style="width:100%;min-height:50px;">${prefillText?escapeAttr(prefillText):''}</textarea>
+            </div>
+            <div>
+              <label class="kbt-hint">S čím to súvisí? (existujúce koncepty, čiarkou oddelené)</label>
+              <input class="kbt-input" id="cSuvisi" style="width:100%;" placeholder="napr. likvidita, order block">
+            </div>
+            <div>
+              <label class="kbt-hint">Obraz / asociácia</label>
+              <input class="kbt-input" id="cObraz" style="width:100%;" placeholder="napr. medzera na moste, ktorú treba zaplátať">
+            </div>
+            <div>
+              <label class="kbt-hint">Logický príbeh (voliteľné)</label>
+              <textarea class="kbt-input" id="cPribeh" style="width:100%;min-height:50px;"></textarea>
+            </div>
+            <button class="kbt-btn primary" id="cSaveBtn" style="margin-top:6px;">Uložiť koncept (vytvorí aj BAM reverz kartu)</button>
+          </div>
+        </div>
+      </div>`;
+    document.getElementById('cSekcia').innerHTML = sections.map(s=>`<option>${escapeHtml(s)}</option>`).join('');
+    document.getElementById('conceptCloseBtn').addEventListener('click', ()=>{ overlay.innerHTML=''; });
+    document.getElementById('cSaveBtn').addEventListener('click', saveConceptFromForm);
+  }
+
+  async function saveConceptFromForm(){
+    const atom = document.getElementById('cAtom').value.trim();
+    const sekcia = document.getElementById('cSekcia').value;
+    const coToJe = document.getElementById('cCoToJe').value.trim();
+    const naco = document.getElementById('cNaco').value.trim();
+    const suvisiRaw = document.getElementById('cSuvisi').value.trim();
+    const obraz = document.getElementById('cObraz').value.trim();
+    const pribeh = document.getElementById('cPribeh').value.trim();
+    if(!atom || !coToJe){ toast('Vyplň aspoň Atóm a "Čo to je?".'); return; }
+
+    const links = suvisiRaw ? suvisiRaw.split(',').map(s=>s.trim()).filter(Boolean) : [];
+    const concept = {
+      id: 'c_'+Math.random().toString(36).slice(2,10),
+      atom, sekcia, coToJe, naco, links, obraz, pribeh,
+      created: todayStr()
+    };
+    concepts.push(concept);
+    await saveConcepts();
+
+    // Vytvor kartu dopredu (Atóm -> vysvetlenie)
+    const forwardOdpoved = [coToJe, naco].filter(Boolean).join(' — ');
+    questions.push(mkQ(sekcia, 'Koncept', `Čo je ${atom} a prečo?`, forwardOdpoved));
+
+    // BAM reverz karta — z asociácie/súvislostí späť na atóm
+    if(links.length){
+      questions.push(mkQ(sekcia, 'Koncept', `Čo spája: ${links.join(', ')}?`, atom));
+    } else if(obraz){
+      questions.push(mkQ(sekcia, 'Koncept', `Tento obraz ("${obraz}") k čomu patrí?`, atom));
+    }
+
+    await saveQuestions();
+    renderAll();
+    document.getElementById('quizOverlay').innerHTML = '';
+    toast(`Koncept "${atom}" uložený, vytvorené karty (dopredu + BAM reverz).`);
+  }
+
+  // ---------------- Čítanie (PQRST) ----------------
+  let readingState = { preview:'', questions:'', read:'', summarize:'' };
+
+  function renderReadingWizard(){
+    readingState = { preview:'', questions:'', read:'', summarize:'' };
+    const overlay = document.getElementById('quizOverlay');
+    overlay.innerHTML = `
+      <div class="kbt-quiz">
+        <div class="kbt-quiz-top">
+          <span class="kbt-quiz-progress">📖 Čítanie (PQRST)</span>
+          <button class="kbt-btn ghost" id="readingCloseBtn">Zavrieť</button>
+        </div>
+        <div class="kbt-chat-wrap" style="overflow-y:auto;">
+          <div class="kbt-hint" style="margin-bottom:10px;">Len na texty/knihy/PDF. Na myšlienky a denník toto nepoužívaj — tam je chat alebo Koncept.</div>
+          <div style="text-align:left;display:flex;flex-direction:column;gap:10px;">
+            <div>
+              <label class="kbt-hint"><b>P</b> — Preview (prehľad nadpisov/témy)</label>
+              <textarea class="kbt-input" id="rPreview" style="width:100%;min-height:50px;"></textarea>
+            </div>
+            <div>
+              <label class="kbt-hint"><b>Q</b> — Question (čo chcem vedieť?)</label>
+              <textarea class="kbt-input" id="rQuestion" style="width:100%;min-height:50px;"></textarea>
+            </div>
+            <div>
+              <label class="kbt-hint"><b>R</b> — Read (kľúčové veci z textu)</label>
+              <textarea class="kbt-input" id="rRead" style="width:100%;min-height:70px;"></textarea>
+            </div>
+            <div>
+              <label class="kbt-hint"><b>S</b> — Summarize (vlastnými slovami)</label>
+              <textarea class="kbt-input" id="rSummarize" style="width:100%;min-height:70px;"></textarea>
+            </div>
+            <div class="kbt-row" style="margin:0;">
+              <button class="kbt-btn" id="rToFactBtn">📇 Ulož ako fakt (karta)</button>
+              <button class="kbt-btn primary" id="rToConceptBtn">🧩 Pošli do Konceptu (má "lebo")</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    document.getElementById('readingCloseBtn').addEventListener('click', ()=>{ overlay.innerHTML=''; });
+    document.getElementById('rToFactBtn').addEventListener('click', async ()=>{
+      const summary = document.getElementById('rSummarize').value.trim();
+      const q = document.getElementById('rQuestion').value.trim();
+      if(!summary){ toast('Vyplň aspoň Summarize.'); return; }
+      questions.push(mkQ('Vlastná', 'Detaily', q || 'Čo som sa dočítal?', summary));
+      await saveQuestions();
+      renderAll();
+      document.getElementById('quizOverlay').innerHTML = '';
+      toast('Uložené ako karta (fakt).');
+    });
+    document.getElementById('rToConceptBtn').addEventListener('click', ()=>{
+      const summary = document.getElementById('rSummarize').value.trim();
+      renderConceptWizard(summary);
+    });
+  }
+
   // ---------------- Add question manually ----------------
   document.getElementById('addQBtn').addEventListener('click', async ()=>{
     const sekcia = document.getElementById('newSekcia').value;
@@ -1204,8 +1384,9 @@ Pravidlá:
         </div>
         <div class="kbt-chat-wrap">
           <div class="kbt-chat-log" id="chatLog"></div>
+          <div id="chatLeboHint"></div>
           <div class="kbt-chat-inputrow">
-            <input class="kbt-input" id="chatInput" placeholder="Napíš odpoveď / ďalšiu vec...">
+            <input class="kbt-input" id="chatInput" placeholder="Napíš odpoveď / ďalšiu vec..." autocomplete="off">
             <button class="kbt-btn primary" id="chatSendBtn">Odoslať</button>
           </div>
           <div class="kbt-row" style="justify-content:center;margin-top:10px;">
@@ -1244,6 +1425,7 @@ Pravidlá:
     diaryConvo.push({ role:'user', content:text });
     input.value = '';
     renderChatLog();
+    checkLeboHint(text);
     addTyping();
     try{
       const reply = await callClaude(diaryConvo, diarySystemPrompt(), 200);
@@ -1259,6 +1441,15 @@ Pravidlá:
       }
       renderChatLog();
     }
+  }
+
+  function checkLeboHint(text){
+    const hint = document.getElementById('chatLeboHint');
+    if(!hint) return;
+    hint.innerHTML = `<div class="kbt-row" style="justify-content:flex-end;margin-top:2px;">
+      <button class="kbt-btn ghost" id="leboToConceptBtn" style="font-size:11px;padding:6px 10px;">🧩 Toto bol vzťah/pravidlo? Ulož ako Koncept</button>
+    </div>`;
+    document.getElementById('leboToConceptBtn').addEventListener('click', ()=> renderConceptWizard(text));
   }
 
   async function finishDiaryChat(){
@@ -1415,6 +1606,14 @@ Prepis rozhovoru:
     });
   }
   setInterval(checkReminders, 20000);
+
+  document.getElementById('toggleAdvancedManageBtn').addEventListener('click', ()=>{
+    const box = document.getElementById('advancedManage');
+    const btn = document.getElementById('toggleAdvancedManageBtn');
+    const isHidden = box.style.display === 'none';
+    box.style.display = isHidden ? 'block' : 'none';
+    btn.textContent = isHidden ? '▲ Skryť nastavenia' : '▼ Nastavenia, sekcie a pripomienky';
+  });
 
   loadReminders();
 
